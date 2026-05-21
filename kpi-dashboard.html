@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPIダッシュボード｜デモ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    min-height: 100vh;
+    padding: 24px 20px;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .page-wrap { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .db-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .db-title { font-size: 20px; font-weight: 600; color: #1a1a18; }
+  .db-meta { font-size: 12px; color: #6b6b66; margin-top: 4px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; padding: 4px 12px; border-radius: 999px;
+    background: #EAF3DE; color: #3B6D11; border: 1px solid #C0DD97;
+    white-space: nowrap; margin-top: 4px;
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #639922; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi-card {
+    background: #fff;
+    border: 1px solid #e2e1da;
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .kpi-label { font-size: 11px; color: #6b6b66; margin-bottom: 6px; }
+  .kpi-val { font-size: 26px; font-weight: 600; color: #1a1a18; line-height: 1; }
+  .kpi-val span { font-size: 14px; font-weight: 400; }
+  .kpi-change { font-size: 11px; margin-top: 5px; display: flex; align-items: center; gap: 3px; }
+  .up { color: #3B6D11; } .dn { color: #A32D2D; }
+
+  /* Panels */
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #e2e1da;
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .panel-title {
+    font-size: 13px; font-weight: 600; color: #1a1a18;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 7px;
+  }
+  .panel-title i { font-size: 16px; color: #6b6b66; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    font-size: 11px; color: #6b6b66; font-weight: 500; text-align: left;
+    padding: 0 6px 8px 0; border-bottom: 1px solid #e8e7e0;
+  }
+  th:not(:first-child) { text-align: right; }
+  td {
+    padding: 8px 6px 8px 0; border-bottom: 1px solid #f0efe8;
+    color: #1a1a18; vertical-align: middle;
+  }
+  td:not(:first-child) { text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  .loc-name { display: flex; align-items: center; gap: 6px; }
+  .area-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .area-osaka { background: #185FA5; }
+  .area-hyogo { background: #0F6E56; }
+
+  /* Bar */
+  .bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .bar-bg { background: #f0efe8; border-radius: 4px; height: 6px; flex: 1; min-width: 50px; }
+  .bar-fill { height: 6px; border-radius: 4px; }
+  .bg-g { background: #639922; } .bg-y { background: #EF9F27; } .bg-r { background: #E24B4A; }
+  .bar-pct { font-size: 11px; color: #1a1a18; min-width: 32px; text-align: right; }
+
+  /* Pills */
+  .pill { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .pill-g { background: #EAF3DE; color: #3B6D11; }
+  .pill-y { background: #FAEEDA; color: #854F0B; }
+  .pill-r { background: #FCEBEB; color: #A32D2D; }
+
+  /* PnL */
+  .pnl-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid #f0efe8; font-size: 12px;
+  }
+  .pnl-row:last-child { border-bottom: none; }
+  .pnl-lbl { color: #6b6b66; }
+  .pnl-lbl-indent { color: #6b6b66; padding-left: 12px; }
+  .pnl-v { font-weight: 600; color: #1a1a18; }
+  .pnl-pos { font-weight: 600; color: #3B6D11; }
+  .pnl-neg { color: #A32D2D; }
+
+  /* Legend */
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; font-size: 11px; color: #6b6b66; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+
+  /* Footer */
+  .db-footer {
+    margin-top: 20px; padding-top: 14px; border-top: 1px solid #e2e1da;
+    font-size: 11px; color: #9b9b96; text-align: center;
+  }
+  .notice-bar {
+    background: #FAEEDA; border: 1px solid #FAC775; border-radius: 8px;
+    padding: 8px 14px; font-size: 11px; color: #854F0B;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 6px;
+  }
+
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .row2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="db-header">
+    <div>
+      <div class="db-title">KPIダッシュボード</div>
+      <div class="db-meta">2026年5月 ／ 大阪・兵庫西エリア ／ デモデータ</div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>自動同期中
+    </div>
+  </div>
+
+  <div class="notice-bar">
+    <i class="ti ti-alert-triangle" style="font-size:14px;"></i>
+    こちらはデモ画面です。実データ連携後に数値が自動更新されます。
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">全教室 在籍人数</div>
+      <div class="kpi-val">284<span>名</span></div>
+      <div class="kpi-change up"><i class="ti ti-arrow-up" style="font-size:11px;"></i>前月比 +11名</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">平均稼働率（定員比）</div>
+      <div class="kpi-val">76<span>%</span></div>
+      <div class="kpi-change dn"><i class="ti ti-arrow-down" style="font-size:11px;"></i>前月比 -1pt</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">今月 体験申込数</div>
+      <div class="kpi-val">38<span>件</span></div>
+      <div class="kpi-change up"><i class="ti ti-arrow-up" style="font-size:11px;"></i>入会率 63%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">全教室 今月損益</div>
+      <div class="kpi-val" style="color:#3B6D11;">+74<span>万円</span></div>
+      <div class="kpi-change up"><i class="ti ti-arrow-up" style="font-size:11px;"></i>利益率 13.8%</div>
+    </div>
+  </div>
+
+  <!-- 稼働率 & 入退会 -->
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><i class="ti ti-building"></i>教室別 稼働率</div>
+      <div class="legend">
+        <div class="legend-item"><div class="area-dot area-osaka"></div>大阪エリア</div>
+        <div class="legend-item"><div class="area-dot area-hyogo"></div>兵庫西エリア</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>教室</th>
+            <th style="min-width:90px; text-align:left;">稼働率</th>
+            <th>判定</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-osaka"></div><a href="https://jackpot-d.com/noustudio/" target="_blank">南森町</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-g" style="width:82%;"></div></div>
+                <span class="bar-pct">82%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-g">Good</span></td>
+          </tr>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-osaka"></div><a href="https://jackpot-d.com/nagai/" target="_blank">長居</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-y" style="width:68%;"></div></div>
+                <span class="bar-pct">68%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-y">注意</span></td>
+          </tr>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-hyogo"></div><a href="https://jackpot-d.com/kobe/" target="_blank">神戸校</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-g" style="width:88%;"></div></div>
+                <span class="bar-pct">88%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-g">Good</span></td>
+          </tr>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-hyogo"></div><a href="https://jackpot-d.com/ashiya/" target="_blank">芦屋</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-g" style="width:79%;"></div></div>
+                <span class="bar-pct">79%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-g">Good</span></td>
+          </tr>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-hyogo"></div><a href="https://jackpot-d.com/tarumi/" target="_blank">垂水</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-y" style="width:65%;"></div></div>
+                <span class="bar-pct">65%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-y">注意</span></td>
+          </tr>
+          <tr>
+            <td><div class="loc-name"><div class="area-dot area-hyogo"></div><a href="https://jackpot-d.com/nada/" target="_blank">灘</a></div></td>
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-bg"><div class="bar-fill bg-r" style="width:54%;"></div></div>
+                <span class="bar-pct">54%</span>
+              </div>
+            </td>
+            <td><span class="pill pill-r">Bad</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><i class="ti ti-trending-up"></i>入退会の増減（今月）</div>
+      <table>
+        <thead>
+          <tr><th>教室</th><th>入会</th><th>退会</th><th>純増</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://jackpot-d.com/noustudio/" target="_blank">南森町</a></td>
+            <td>8</td><td>4</td><td class="up">+4</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/nagai/" target="_blank">長居</a></td>
+            <td>5</td><td>7</td><td class="dn">-2</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/kobe/" target="_blank">神戸校</a></td>
+            <td>10</td><td>4</td><td class="up">+6</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/ashiya/" target="_blank">芦屋</a></td>
+            <td>6</td><td>3</td><td class="up">+3</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/tarumi/" target="_blank">垂水</a></td>
+            <td>4</td><td>6</td><td class="dn">-2</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/nada/" target="_blank">灘</a></td>
+            <td>3</td><td>5</td><td class="dn">-2</td>
+          </tr>
+          <tr style="font-weight:600; background:#f8f7f3;">
+            <td>合計</td><td>36</td><td>29</td><td class="up">+7</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 損益 & 体験入会 -->
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><i class="ti ti-coin"></i>損益サマリー（全教室）</div>
+      <div class="pnl-row"><span class="pnl-lbl">売上合計</span><span class="pnl-v">538万円</span></div>
+      <div class="pnl-row"><span class="pnl-lbl-indent">— 家賃</span><span class="pnl-neg">-165万円</span></div>
+      <div class="pnl-row"><span class="pnl-lbl-indent">— 人件費</span><span class="pnl-neg">-214万円</span></div>
+      <div class="pnl-row"><span class="pnl-lbl-indent">— その他経費</span><span class="pnl-neg">-85万円</span></div>
+      <div class="pnl-row" style="border-top:1px solid #e2e1da; margin-top:4px; padding-top:10px;">
+        <span class="pnl-lbl" style="font-weight:600; color:#1a1a18; font-size:13px;">営業利益</span>
+        <span class="pnl-pos" style="font-size:16px;">+74万円</span>
+      </div>
+      <div class="pnl-row"><span class="pnl-lbl">利益率</span><span class="pnl-pos">13.8%</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><i class="ti ti-users"></i>体験・入会データ（今月）</div>
+      <table>
+        <thead>
+          <tr><th>教室</th><th>体験</th><th>入会</th><th>入会率</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://jackpot-d.com/noustudio/" target="_blank">南森町</a></td>
+            <td>10</td><td>8</td><td class="up">80%</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/nagai/" target="_blank">長居</a></td>
+            <td>7</td><td>5</td><td class="up">71%</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/kobe/" target="_blank">神戸校</a></td>
+            <td>9</td><td>7</td><td class="up">78%</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/ashiya/" target="_blank">芦屋</a></td>
+            <td>6</td><td>4</td><td class="up">67%</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/tarumi/" target="_blank">垂水</a></td>
+            <td>4</td><td>0</td><td class="dn">0%</td>
+          </tr>
+          <tr>
+            <td><a href="https://jackpot-d.com/nada/" target="_blank">灘</a></td>
+            <td>2</td><td>0</td><td class="dn">0%</td>
+          </tr>
+          <tr style="font-weight:600; background:#f8f7f3;">
+            <td>合計</td><td>38</td><td>24</td><td class="up">63%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="db-footer">
+    ※ すべての数値はデモ用サンプルデータです。実データ連携後に自動更新されます。<br>
+    データソース：BigQuery 自動同期 ／ Jackpot D
+  </div>
+
+</div>
+</body>
+</html>
